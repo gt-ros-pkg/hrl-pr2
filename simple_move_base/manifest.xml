@@ -13,6 +13,6 @@
   <depend package="geometry_msgs"/>
   <depend package="actionlib"/>
 
-</packagehrl_pr2_lib>
+</package>
 
 

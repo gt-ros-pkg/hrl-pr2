@@ -5,4 +5,5 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/hrl-pr2</url>
   <depend stack="ros" />
+  <depend stack="hrl-lib" />
 </stack>
