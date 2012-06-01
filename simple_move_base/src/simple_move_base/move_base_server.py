@@ -1,9 +1,10 @@
 #! /usr/bin/python
-import roslib; roslib.load_manifest('hrl_pr2_lib')
+import roslib; roslib.load_manifest('simple_move_base')
 import rospy
 import tf.transformations as tr
 import hrl_lib.tf_utils as tfu
 import hrl_lib.util as ut
+import simple_move_base.msg as hm
 import tf
 
 import geometry_msgs.msg as gm
@@ -11,7 +12,6 @@ import sys
 import math
 import numpy as np
 import actionlib
-import hrl_pr2_lib.msg as hm
 
 class MoveBase:
 
