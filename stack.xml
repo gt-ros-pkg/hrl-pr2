@@ -1,0 +1,8 @@
+<stack>
+  <description brief="Python interface for PR2">Packages that wraps ugly ROS interfaces in Pythonic code.</description>
+  <author>Hai Nguyen, Advait Jain, Kelsey Hawkins, and Various Students. Advisor: Prof Charles C. Kemp. Lab: Healthcare Robotics Lab (Georgia Tech)</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/hrl-pr2</url>
+  <depend stack="ros" />
+</stack>
