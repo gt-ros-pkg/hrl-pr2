@@ -21,8 +21,11 @@ class MoveBase:
         #rospy.Subscriber('simple_move_base', gm.Pose2D, self.pose2d_cb)
         self.tl = tf.TransformListener()
 
-        self.go_xy_server = actionlib.SimpleActionServer('go_xy', hm.GoXYAction, self._go_xy_cb, auto_start=True)
-        self.go_ang_server = actionlib.SimpleActionServer('go_angle', hm.GoAngleAction, self._go_ang_cb, auto_start=True)
+        self.go_xy_server = actionlib.SimpleActionServer('go_xy', hm.GoXYAction, self._go_xy_cb)
+        self.go_xy_server.start()
+
+        self.go_ang_server = actionlib.SimpleActionServer('go_angle', hm.GoAngleAction, self._go_ang_cb)
+        self.go_ang_server.start()
 
     def _go_xy_cb(self, goal):
         rospy.loginfo('received go_xy goal %f %f' % (goal.x, goal.y))
@@ -72,6 +75,10 @@ class MoveBase:
             if mag < tolerance:
                 break
 
+            if self.go_xy_server.is_preempt_requested():
+                self.go_xy_server.set_preempted()
+                break
+
             direc    = diff_odom / mag
             speed = min(mag * k, max_speed)
             vel_odom = direc * speed
@@ -113,6 +120,10 @@ class MoveBase:
             if np.abs(diff) < tolerance:
                 break
 
+            if self.go_ang_server.is_preempt_requested():
+                self.go_ang_server.set_preempted()
+                break
+
             tw = gm.Twist()
             vels = [p, np.sign(p) * max_ang_vel]
             tw.angular.z = vels[np.argmin(np.abs(vels))]
@@ -123,93 +134,9 @@ class MoveBase:
         rospy.loginfo('finished %.3f' % math.degrees(diff))
         return diff
 
-    #def pose2d_cb(self, msg):
-    #    if msg.x != 0:
-    #        rospy.loginfo('go x called')
-    #        self.go_x(msg.x, msg.y)
-
-    #    elif msg.theta != 0:
-    #        rospy.loginfo('go theta called')
-    #        self.go_ang(msg.theta)
-
-    #def go_ang(self, ang, speed):
-    #    dt = math.radians(ang)
-
-    #    if dt > 0:
-    #        sign = -1
-    #    elif dt < 0:
-    #        sign = 1
-    #    else:
-    #        sign = 0
-
-    #    self.tl.waitForTransform('base_footprint', 'odom_combined', rospy.Time(), rospy.Duration(10))
-    #    p0_base = tfu.transform('base_footprint', 'odom_combined', self.tl)# \
-    #    start_ang = tr.euler_from_matrix(p0_base[0:3, 0:3], 'sxyz')[2]
-    #    r = rospy.Rate(100)
-    #    dist_so_far = 0.
-
-    #    last_ang = start_ang
-    #    while not rospy.is_shutdown():
-    #        pcurrent_base = tfu.transform('base_footprint', 'odom_combined', self.tl) #\
-    #        current_ang = tr.euler_from_matrix(pcurrent_base[0:3, 0:3], 'sxyz')[2]
-    #        #relative_trans = np.linalg.inv(p0_base) * pcurrent_base
-    #        #relative_ang = math.degrees(tr.euler_from_matrix(relative_trans[0:3, 0:3], 'sxyz')[2])
-    #        dist_so_far = dist_so_far + (ut.standard_rad(current_ang - last_ang))
-    #        #print 'dist_so_far %.3f dt %.3f diff %.3f' % (dist_so_far, dt, ut.standard_rad(current_ang - last_ang))
-    #        if dt > 0 and dist_so_far > dt:
-    #            rospy.loginfo('stopped! %f %f' % (dist_so_far, dt))
-    #            break
-    #        elif dt < 0 and dist_so_far < dt:
-    #            rospy.loginfo('stopped! %f %f' % (dist_so_far, dt))
-    #            break  
-    #        elif dt == 0:  
-    #            rospy.loginfo('stopped! %f %f' % (dist_so_far, dt))
-    #            break
-
-    #        tw = gm.Twist()
-    #        tw.linear.x = 0
-    #        tw.linear.y = 0
-    #        tw.linear.z = 0
-    #        tw.angular.x = 0
-    #        tw.angular.y = 0#0#math.radians(10)
-    #        tw.angular.z = math.radians(speed * sign)
-
-    #        self.tw_pub.publish(tw)
-    #        r.sleep()
-    #        last_ang = current_ang
-
-    #def go_x(self, x, speed):
-    #    vel = speed * np.sign(x)
-    #    self.tl.waitForTransform('base_footprint', 'odom_combined', rospy.Time(), rospy.Duration(10))
-    #    p0_base = tfu.transform('base_footprint', 'odom_combined', self.tl)
-    #    r = rospy.Rate(100)
-
-    #    while not rospy.is_shutdown():
-    #        pcurrent_base = tfu.transform('base_footprint', 'odom_combined', self.tl)
-    #        relative_trans = np.linalg.inv(p0_base) * pcurrent_base
-    #        dist_moved = np.linalg.norm(relative_trans[0:3,3])
-    #        print "%s" % str(dist_moved)
-    #        
-    #        if dist_moved > np.abs(x):
-    #            rospy.loginfo('stopped! error %f' % (np.abs(dist_moved-np.abs(x))))
-    #            break
-
-    #        tw = gm.Twist()
-    #        tw.linear.x = vel
-    #        tw.linear.y = 0
-    #        tw.linear.z = 0
-    #        tw.angular.x = 0
-    #        tw.angular.y = 0
-    #        tw.angular.z = 0
-
-    #        self.tw_pub.publish(tw)
-    #        r.sleep()
 
 if __name__ == '__main__':
     m = MoveBase()
     rospy.loginfo('simple move base server up!')
     rospy.spin()
-    #m.go_ang(-390, 100)
-    #m.go_x(.2, .05)
-
 
