@@ -65,11 +65,11 @@ class MoveBase:
 
         while not rospy.is_shutdown():
             robot_odom = np.matrix(tfu.transform('odom_combined', 'base_footprint', self.tl)[0:2,3])
-            #rospy.loginfo('odom %s' % str(robot_odom.T))
+            rospy.loginfo('go_xy: odom %s' % str(robot_odom.T))
 
             diff_odom  = target_odom - robot_odom
             mag        = np.linalg.norm(diff_odom)
-            #rospy.loginfo('error %s' % str(mag))
+            rospy.loginfo('go_xy: error %s' % str(mag))
             if func != None:
                 func(diff_odom)
             if mag < tolerance:
@@ -96,25 +96,37 @@ class MoveBase:
             #rospy.loginfo('commanded %s' % str(tw))
             self.tw_pub.publish(tw)
             rate.sleep()
-        rospy.loginfo('finished go_xy %f' % np.linalg.norm(diff_odom))
+
+        rospy.loginfo('go_xy: finished go_xy %f' % np.linalg.norm(diff_odom))
         return diff_odom
 
     ##
     # delta angle
-    def go_angle(self, target_odom, tolerance=math.radians(5.), max_ang_vel=math.radians(20.), func=None):
-        self.tl.waitForTransform('base_footprint', 'odom_combined', rospy.Time(), rospy.Duration(10))
+    def go_angle(self, target_base, tolerance=math.radians(5.), max_ang_vel=math.radians(20.), func=None):
+        self.tl.waitForTransform('odom_combined', 'base_footprint', rospy.Time(), rospy.Duration(10))
         rate = rospy.Rate(100)
         k = math.radians(80)
+
+        od_T_bf = tfu.transform('odom_combined', 'base_footprint', self.tl)
+        target_odom_mat = od_T_bf * tfu.tf_as_matrix( ([0, 0, 0.], tr.quaternion_from_euler(0, 0, target_base)) )
+        target_odom = tr.euler_from_quaternion(tfu.matrix_as_tf(target_odom_mat)[1])[2]
+        #target_odom = (od_T_bf * np.row_stack([target_base, np.matrix([0,1.]).T]))[0:2,0]
 
         #current_ang_odom = tr.euler_from_matrix(tfu.transform('base_footprint', 'odom_combined', self.tl)[0:3, 0:3], 'sxyz')[2]
         #target_odom = current_ang_odom + delta_ang
 
+        robot_odom = tfu.transform('odom_combined', 'base_footprint', self.tl)
+        current_ang_odom = tr.euler_from_matrix(robot_odom[0:3, 0:3], 'sxyz')[2]
+        diff = ut.standard_rad(current_ang_odom - target_odom)
+        rospy.loginfo('go_angle: target %.2f' %  np.degrees(target_odom))
+        rospy.loginfo('go_angle: current %.2f' %  np.degrees(current_ang_odom))
+        rospy.loginfo('go_angle: diff %.2f' %  np.degrees(diff))
+
         while not rospy.is_shutdown():
-            robot_odom = tfu.transform('base_footprint', 'odom_combined', self.tl)
+            robot_odom = tfu.transform('odom_combined', 'base_footprint', self.tl)
             current_ang_odom = tr.euler_from_matrix(robot_odom[0:3, 0:3], 'sxyz')[2]
             diff = ut.standard_rad(current_ang_odom - target_odom)
             p = k * diff
-            #print diff
             if func != None:
                 func(diff)
             if np.abs(diff) < tolerance:
@@ -131,7 +143,7 @@ class MoveBase:
             self.tw_pub.publish(tw)
             #rospy.loginfo('commanded %s' % str(tw))
             rate.sleep()
-        rospy.loginfo('finished %.3f' % math.degrees(diff))
+        rospy.loginfo('go_ang: finished %.3f' % math.degrees(diff))
         return diff
 
 
