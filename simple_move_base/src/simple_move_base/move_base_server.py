@@ -21,10 +21,10 @@ class MoveBase:
         #rospy.Subscriber('simple_move_base', gm.Pose2D, self.pose2d_cb)
         self.tl = tf.TransformListener()
 
-        self.go_xy_server = actionlib.SimpleActionServer('go_xy', hm.GoXYAction, self._go_xy_cb)
+        self.go_xy_server = actionlib.SimpleActionServer('go_xy', hm.GoXYAction, self._go_xy_cb, auto_start=False)
         self.go_xy_server.start()
 
-        self.go_ang_server = actionlib.SimpleActionServer('go_angle', hm.GoAngleAction, self._go_ang_cb)
+        self.go_ang_server = actionlib.SimpleActionServer('go_angle', hm.GoAngleAction, self._go_ang_cb, auto_start=False)
         self.go_ang_server.start()
 
     def _go_xy_cb(self, goal):
@@ -63,13 +63,16 @@ class MoveBase:
         #print 'target base', target_base.T
         #print 'target odom', target_odom.T
 
+        robot_odom = np.matrix(tfu.transform('odom_combined', 'base_footprint', self.tl)[0:2,3])
+        diff_odom  = target_odom - robot_odom
+        mag        = np.linalg.norm(diff_odom)
+        rospy.loginfo('go_xy: error %s' % str(mag))
         while not rospy.is_shutdown():
             robot_odom = np.matrix(tfu.transform('odom_combined', 'base_footprint', self.tl)[0:2,3])
-            rospy.loginfo('go_xy: odom %s' % str(robot_odom.T))
+            #rospy.loginfo('go_xy: odom %s' % str(robot_odom.T))
 
             diff_odom  = target_odom - robot_odom
             mag        = np.linalg.norm(diff_odom)
-            rospy.loginfo('go_xy: error %s' % str(mag))
             if func != None:
                 func(diff_odom)
             if mag < tolerance:
@@ -125,7 +128,8 @@ class MoveBase:
         while not rospy.is_shutdown():
             robot_odom = tfu.transform('odom_combined', 'base_footprint', self.tl)
             current_ang_odom = tr.euler_from_matrix(robot_odom[0:3, 0:3], 'sxyz')[2]
-            diff = ut.standard_rad(current_ang_odom - target_odom)
+            diff = ut.standard_rad(target_odom - current_ang_odom)
+            rospy.loginfo('go_angle: current %.2f diff %.2f' %  (np.degrees(current_ang_odom), np.degrees(diff)))
             p = k * diff
             if func != None:
                 func(diff)
