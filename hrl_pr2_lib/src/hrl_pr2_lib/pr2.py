@@ -469,7 +469,7 @@ class SoundPlay:
 class PR2:
 
     def __init__(self, tf_listener=None, arms=True, base=False, grippers=True,
-                 use_kinematics=True):
+                 use_kinematics=True, use_projector=True):
         try:
             rospy.init_node('pr2', anonymous=True)
         except rospy.exceptions.ROSException, e:
@@ -500,7 +500,8 @@ class PR2:
         self.controller_manager = ControllerManager()
         self.sound = SoundPlay()
         #SoundClient()
-        self.projector = StructuredLightProjector()
+        if use_projector:
+            self.projector = StructuredLightProjector()
 
     def pose(self):
         s = self.joint_provider()
