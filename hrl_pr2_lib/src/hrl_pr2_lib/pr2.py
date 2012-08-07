@@ -418,15 +418,14 @@ class PR2Gripper:
 class StructuredLightProjector:
     def __init__(self):
         self.client = dc.Client("camera_synchronizer_node")
-        self.node_config = self.client.get_configuration()
 
     def set(self, on):
-        self.node_config["projector_mode"] = 2
+        config = {"projector_mode":2}
         if on:
-            self.node_config["narrow_stereo_trig_mode"] = 3
+            config["narrow_stereo_trig_mode"] = 3
         else:
-            self.node_config["narrow_stereo_trig_mode"] = 2
-        self.client.update_configuration(self.node_config)
+            config["narrow_stereo_trig_mode"] = 2
+        self.client.update_configuration(config)
 
     def set_prosilica_inhibit(self, on):
         self.node_config['prosilica_projector_inhibit'] = on
