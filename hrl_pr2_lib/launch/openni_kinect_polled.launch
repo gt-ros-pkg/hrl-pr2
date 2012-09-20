@@ -6,7 +6,7 @@
     <remap from="camera" to="kinect_head"/>
     <!-- <param name="registration_type" value="2" /> -->
     <!-- <param name="image_input_format" value="6" /> -->
-    <!-- <rosparam command="load" file="$(find openni_camera)/info/openni_params.yaml" /> -->
+    <!-- <rosparam command="load" file="$(find openni_camera_deprecated)/info/openni_params.yaml" /> -->
 
     <!--param name="topic" value="first" /-->
     <!--param name="device_id" value="2@3" --> <!-- this line uses device on usb bus 2 and addres 3 -->
@@ -24,7 +24,7 @@
     <param name="depth_time_offset" value="0" />
     <param name="image_time_offset" value="0" />
   </node>
-  <!-- <include file="$(find openni_camera)/launch/kinect_frames.launch"/> -->
+  <!-- <include file="$(find openni_camera_deprecated)/launch/kinect_frames.launch"/> -->
   <!-- <include file="$(find hrl_pr2_lib)/launch/kinect_frames.launch"/> -->
   <node pkg="hrl_pr2_lib" type="kinect_poller.py" name="kinect_poller" output="screen">
     <param name="topic_name" value="/kinect_head/rgb/points" />
